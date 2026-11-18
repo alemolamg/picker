@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Picker · Revisión rápida</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --canvas: light-dark(#f2f3f7, #15161a);
+      --window: light-dark(#fff, #212229);
+      --panel: light-dark(#f7f8fb, #292b33);
+      --surface: light-dark(#edeff5, #30333d);
+      --ink: light-dark(#182031, #f2f4fb);
+      --muted: light-dark(#555f73, #aeb6c8);
+      --line: light-dark(#dce0ea, #444857);
+      --blue: light-dark(#1457c3, #9abbff);
+      --blue-tint: light-dark(#eaf2ff, #243653);
+      --red: light-dark(#a42339, #ffacb9);
+      --red-tint: light-dark(#fff0f2, #452831);
+      --green: light-dark(#1b7049, #9bddb5);
+      --green-tint: light-dark(#e8f7ef, #253f34);
+      font: 15px/1.5 system-ui, -apple-system, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--canvas); }
+    main { max-width: 1190px; margin: 0 auto; padding: 48px clamp(14px, 4vw, 48px) 60px; }
+    header { margin: 0 0 32px; }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: clamp(32px, 5vw, 48px); line-height: 1.06; letter-spacing: -.055em; }
+    h2 { font-size: 24px; line-height: 1.2; letter-spacing: -.035em; }
+    h3 { font-size: 15px; }
+    header p, .intro p { margin-top: 7px; color: var(--muted); }
+    a { color: var(--blue); }
+    section { margin-top: 38px; }
+    .intro { margin-bottom: 13px; }
+    .window { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: var(--window); }
+    .titlebar { display: flex; align-items: center; gap: 14px; padding: 11px 16px; min-height: 46px;
+      border-bottom: 1px solid var(--line); background: var(--panel); font-size: 13px; font-weight: 660; }
+    .lights { display: flex; gap: 6px; }
+    .lights i { width: 10px; height: 10px; border-radius: 50%; background: #fb635f; }
+    .lights i:nth-child(2) { background: #f6be4f; }
+    .lights i:nth-child(3) { background: #41c77a; }
+    .layout { display: grid; grid-template-columns: 174px minmax(0, 1fr); }
+    .sidebar { border-right: 1px solid var(--line); background: var(--panel); padding: 15px 10px; }
+    .sidebar ul { padding: 0; margin: 0; list-style: none; }
+    .sidebar li { padding: 7px 9px; margin-bottom: 3px; border-radius: 7px; font-size: 13px; }
+    .sidebar .current { background: var(--blue-tint); color: var(--blue); font-weight: 680; }
+    .sidebar .count { float: right; color: var(--muted); padding-left: 3px; }
+    .content { min-width: 0; }
+    .bar { padding: 13px 17px; border-bottom: 1px solid var(--line); display: flex;
+      flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+    .bar strong { margin-right: auto; }
+    .meta { color: var(--muted); font-size: 12px; }
+    .legend { color: var(--muted); font-size: 12px; margin-top: 10px; }
+    .chip, .control { display: inline-flex; align-items: center; gap: 7px; padding: 4px 9px;
+      font-size: 12px; font-weight: 600; border: 1px solid var(--line); border-radius: 7px; }
+    .active { border-color: var(--blue); background: var(--blue-tint); color: var(--blue); }
+    .remove { border-color: transparent; background: var(--red-tint); color: var(--red); }
+    .keep { border-color: transparent; background: var(--green-tint); color: var(--green); }
+    .grid { padding: 16px; display: grid; gap: 10px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .tile { display: grid; gap: 5px; border: 1px solid var(--line); border-radius: 9px; padding: 7px; }
+    .tile.chosen { border-color: var(--blue); background: var(--blue-tint); }
+    .tile h3 { font-size: 13px; }
+    .photo-slot { background: var(--surface); border-radius: 5px; display: grid; place-content: center; text-align: center;
+      min-height: 82px; padding: 10px; color: var(--muted); font-size: 12px; }
+    .compare .photo-slot { min-height: clamp(130px, 19vw, 230px); font-size: 14px; }
+    .compare { padding: 16px; display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .compare .tile { padding: 9px; }
+    .footer { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--line); }
+    .footer .meta { margin-right: auto; }
+    .shortcuts { justify-content: center; }
+    .lower { justify-content: space-between; padding-top: 0; border: 0; }
+    .footnote { margin-top: 28px; font-size: 14px; color: var(--muted); }
+    @media (max-width: 760px) {
+      .layout { grid-template-columns: minmax(0, 1fr); }
+      .sidebar { border: 0; border-bottom: 1px solid var(--line); }
+      .sidebar ul { display: flex; gap: 4px; flex-wrap: wrap; }
+      .sidebar li { margin: 0; }
+    }
+    @media (max-width: 470px) {
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .bar, .grid, .compare, .footer { padding-left: 10px; padding-right: 10px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Revisión rápida</h1>
+    <p>Picker para macOS · Maquetas estáticas con fichas ficticias</p>
+  </header>
+
+  <section aria-labelledby="grid-title">
+    <div class="intro">
+      <h2 id="grid-title">Cuadrícula por tandas</h2>
+      <p>Selecciona varias capturas y reserva las fotos que necesitas mirar con calma.</p>
+    </div>
+    <div class="window">
+      <div class="titlebar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>Picker</div>
+      <div class="layout">
+        <aside class="sidebar" aria-label="Barra lateral en la cuadrícula">
+          <ul>
+            <li class="current">Revisión rápida</li>
+            <li>Revisar luego <span class="count">3</span></li>
+            <li>Fotos similares</li>
+            <li>Limpieza</li>
+            <li>Pending</li>
+            <li>Historial</li>
+          </ul>
+        </aside>
+        <div class="content">
+          <div class="bar">
+            <strong>Tanda actual</strong>
+            <span class="meta">19 candidatas de 25 fotos de muestra</span>
+          </div>
+          <div class="bar" aria-label="Filtros de candidatas">
+            <span class="chip">Todas</span>
+            <span class="chip active">Capturas · activo</span>
+            <span class="chip">Posibles borrosas</span>
+            <span class="chip">Documentos</span>
+            <span class="chip">Etiquetas</span>
+            <span class="chip">Cualquier fecha</span>
+          </div>
+          <div class="grid" aria-label="Muestra parcial del filtro Capturas">
+            <article class="tile chosen"><div class="photo-slot">Vista previa · caso 01</div><h3>Bienvenida antigua</h3><span class="meta">Captura · seleccionada</span></article>
+            <article class="tile chosen"><div class="photo-slot">Vista previa · caso 02</div><h3>Descarga completada</h3><span class="meta">Captura · seleccionada</span></article>
+            <article class="tile chosen"><div class="photo-slot">Vista previa · caso 03</div><h3>Previsión pasada</h3><span class="meta">Captura · seleccionada</span></article>
+            <article class="tile"><div class="photo-slot">Vista previa · caso 08</div><h3>Meme</h3><span class="meta">Captura</span></article>
+            <article class="tile"><div class="photo-slot">Vista previa · caso 09</div><h3>Justificante</h3><span class="meta">Captura · foto con texto</span></article>
+            <article class="tile"><div class="photo-slot">Vista previa en iCloud · caso 10</div><h3>Alerta</h3><span class="meta">Abrir para cargar</span></article>
+          </div>
+          <div class="footer">
+            <span class="meta">3 seleccionadas</span>
+            <span class="control">Revisar luego</span>
+            <span class="control keep">Conservar</span>
+            <span class="control remove">Marcar 3 para borrar</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="legend">Muestra de seis capturas. Con dos seleccionadas aparece «Comparar dos».</p>
+  </section>
+
+  <section aria-labelledby="compare-title">
+    <div class="intro">
+      <h2 id="compare-title">Tarjetas para comparar</h2>
+      <p>Compara la pareja lado a lado. Las flechas actúan sobre la foto activa.</p>
+    </div>
+    <div class="window">
+      <div class="titlebar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>Picker</div>
+      <div class="layout">
+        <aside class="sidebar" aria-label="Barra lateral en la comparación">
+          <ul>
+            <li class="current">Revisión rápida</li>
+            <li>Revisar luego <span class="count">3</span></li>
+            <li>Fotos similares</li>
+            <li>Limpieza</li>
+            <li>Pending <span class="count">7</span></li>
+            <li>Historial</li>
+          </ul>
+        </aside>
+        <div class="content">
+          <div class="bar">
+            <span class="control">Volver a la tanda</span>
+            <strong>Etiqueta de router · 2 fotos</strong>
+            <span class="control">Deshacer</span>
+          </div>
+          <div class="compare">
+            <article class="tile chosen"><div class="photo-slot">Vista previa · caso 16</div><h3>Toma A · foto activa</h3><span class="meta">Posible etiqueta técnica</span></article>
+            <article class="tile"><div class="photo-slot">Vista previa · caso 17</div><h3>Toma B</h3><span class="meta">Posible etiqueta técnica</span></article>
+          </div>
+          <div class="footer shortcuts">
+            <span class="control remove">← Marcar para borrar</span>
+            <span class="control">Revisar luego · 2 fotos</span>
+            <span class="control keep">Conservar →</span>
+          </div>
+          <div class="footer lower">
+            <span class="meta">Revisar luego guarda la pareja para otra pasada</span>
+            <span class="control">Marcar grupo entero · 2 fotos</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="legend">Para una foto suelta, la vista previa ocupa todo el espacio de comparación.</p>
+  </section>
+  <p class="footnote"><a href="pruebas.md">Ver el guion de prueba y los 25 casos</a></p>
+</main>
+</body>
+</html>
