@@ -3,11 +3,14 @@ import Photos
 import SwiftUI
 
 enum ReviewFilter: String, CaseIterable, Identifiable {
-    case all = "Similar Photos", cleanup = "Cleanup", pending = "Pending", history = "History"
+    case all = "Similar Photos", quick = "Quick Review", quickLater = "Review Later"
+    case cleanup = "Cleanup", pending = "Pending", history = "History"
     var id: String { rawValue }
     var symbol: String {
         switch self {
         case .all: "square.stack"
+        case .quick: "rectangle.on.rectangle.angled"
+        case .quickLater: "bookmark"
         case .cleanup: "photo.on.rectangle"
         case .pending: "tray.full"
         case .history: "clock.arrow.circlepath"
@@ -28,6 +31,10 @@ final class LibraryModel: NSObject, PHPhotoLibraryChangeObserver {
     private var viewedCleanupPhotos: [String: Photo] = [:]
     private(set) var cleanupReady = false
     var cleanupNotice: String?
+    let quickReview = QuickReviewSession()
+    private let quickAnalyzer = QuickPhotoAnalyzer()
+    private var quickTask: Task<Void, Never>?
+    private var quickUndo: (() -> Bool)?
 
     var history: [String: ProcessedGroup] = [:] {
         didSet { rebuildProcessedKeepers() }
@@ -75,11 +82,13 @@ final class LibraryModel: NSObject, PHPhotoLibraryChangeObserver {
 
     // A screenshot sheet may own an export or deletion task. Wait for it to close,
     // and for scan checkpoints and PhotoKit changes to finish, before restarting.
-    var blocksUpdateRelaunch: Bool { scanning || preparingReview || deleting || showQueue || showScreenshots }
+    var blocksUpdateRelaunch: Bool {
+        scanning || quickReview.analyzing || preparingReview || deleting || showQueue || showScreenshots
+    }
 
     var hasAccess: Bool { authorization == .authorized || authorization == .limited }
     var selectedGroup: SimilarGroup? {
-        if filter == .pending || filter == .cleanup { return nil }
+        if filter == .pending || filter == .cleanup || filter == .quick || filter == .quickLater { return nil }
         if filter == .history { return selectedHistory?.group }
         return groups.first { $0.id == selectedID }
     }
@@ -105,7 +114,7 @@ final class LibraryModel: NSObject, PHPhotoLibraryChangeObserver {
 
     func matches(_ group: SimilarGroup, filter: ReviewFilter) -> Bool {
         switch filter {
-        case .cleanup: return false
+        case .cleanup, .quick, .quickLater: return false
         case .all:
             guard history[group.id] == nil || history[group.id]?.invalidated == true else { return false }
             return !isProcessedKeeperGroup(group)
@@ -130,6 +139,8 @@ final class LibraryModel: NSObject, PHPhotoLibraryChangeObserver {
     func sidebarCount(_ filter: ReviewFilter) -> Int {
         switch filter {
         case .cleanup: return cleanupCatalog.count
+        case .quick: return quickReview.batch.count
+        case .quickLater: return quickReview.store.notes.values.filter { $0.disposition == .later }.count
         case .all: return groups.filter { matches($0, filter: .all) }.count
         case .pending: return deletionPhotos.count
         case .history: return history.count
@@ -184,6 +195,7 @@ final class LibraryModel: NSObject, PHPhotoLibraryChangeObserver {
             decisions = LocalStore.read([String: Decision].self, name: "decisions.json") ?? [:]
             history = LocalStore.read([String: ProcessedGroup].self, name: "history.json") ?? [:]
             cleanupMarks = LocalStore.read([String: Photo].self, name: "cleanup-pending.json") ?? [:]
+            quickReview.store = LocalStore.read(QuickReviewStore.self, name: "quick-review.json") ?? QuickReviewStore()
             restoreReviewState()
             refresh()
         }
@@ -214,6 +226,7 @@ final class LibraryModel: NSObject, PHPhotoLibraryChangeObserver {
                 }
                 updateCleanupCatalog(result.cleanupPhotos)
                 saveHistory()
+                saveQuickReview()
                 applyProgress(result.progress)
                 hasScanned = true
                 status = "Library up to date."
@@ -516,6 +529,7 @@ final class LibraryModel: NSObject, PHPhotoLibraryChangeObserver {
     }
 
     func updateCleanupCatalog(_ photos: [CleanupPhoto]) {
+        quickReview.updateCatalog(photos)
         let grouped = Set(groups.flatMap { $0.photos.map(\.id) })
         cleanupCatalog = photos.filter { !grouped.contains($0.id) }
         cleanupByID = Dictionary(uniqueKeysWithValues: cleanupCatalog.map { ($0.id, $0) })
@@ -592,5 +606,149 @@ final class LibraryModel: NSObject, PHPhotoLibraryChangeObserver {
         saveDecisions()
         if let selectedID, ids.contains(selectedID), filter != .history { select(next ?? visibleGroups.first) }
         else { ensureSelection() }
+    }
+}
+
+extension LibraryModel {
+    var canUndoQuickReview: Bool { quickUndo != nil }
+
+    private var quickActionsAllowed: Bool {
+        cleanupReady && !needsRefresh && !deleting && !preparingReview && !showQueue && !showScreenshots
+    }
+
+    func quickCandidates(later: Bool) -> [QuickPhoto] {
+        let groups = groups.filter { matches($0, filter: .all) }
+        let eligible = Set(cleanupCatalog.map(\.id)).union(groups.flatMap { $0.photos.map(\.id) })
+        let pending = Set(deletionPhotos.map(\.id))
+        return quickReview.candidates(groups: groups).filter { item in
+            guard eligible.contains(item.id), !pending.contains(item.id) else { return false }
+            if later { return quickReview.note(for: item)?.disposition == .later }
+            return quickReview.note(for: item) == nil && !item.categories.isEmpty
+        }
+    }
+
+    func nextQuickBatch(_ candidates: [QuickPhoto]) {
+        let remaining = candidates.filter { !quickReview.considered.contains($0.id) }
+        quickReview.batch = QuickReviewBatch.choose(from: remaining)
+        quickReview.considered.formUnion(quickReview.batch.map(\.id))
+        quickReview.clearSelection()
+        quickReview.showComparison([])
+    }
+
+    func startQuickAnalysis() {
+        guard persistenceEnabled, quickActionsAllowed, quickTask == nil else { return }
+        let photos = quickReview.photosToAnalyze()
+        guard !photos.isEmpty else { return }
+        quickReview.analyzing = true
+        quickReview.inspectedCount = 0
+        quickReview.inspectTotal = photos.count
+        quickTask = Task {
+            await quickAnalyzer.inspect(photos) { [weak self] photo, signals in
+                self?.quickReview.record(signals, for: photo)
+            }
+            quickReview.analyzing = false
+            quickTask = nil
+            saveQuickReview()
+        }
+    }
+
+    func stopQuickAnalysis() { quickTask?.cancel() }
+
+    func quickGroup(for item: QuickPhoto) -> SimilarGroup? {
+        guard let id = item.groupID else { return nil }
+        return groups.first { $0.id == id && $0.photos.contains(item.photo) && matches($0, filter: .all) }
+    }
+
+    private func isQuickItemCurrent(_ item: QuickPhoto) -> Bool {
+        guard quickReview.contains(item.photo) else { return false }
+        if item.groupID != nil { return quickGroup(for: item) != nil }
+        return cleanupByID[item.id]?.photo == item.photo
+    }
+
+    func noteQuickPreview(_ photo: Photo) {
+        quickReview.notePreview(photo)
+        noteCleanupPreview(photo)
+    }
+
+    func canMarkQuick(_ item: QuickPhoto) -> Bool {
+        guard quickActionsAllowed, isQuickItemCurrent(item), quickReview.hasPreview(item.photo) else { return false }
+        if let group = quickGroup(for: item) {
+            return canReview(group) && !ReviewRules.deletions(in: group, decision: decisions[group.id]).contains(item.photo)
+        }
+        return canMarkCleanup(item.photo)
+    }
+
+    @discardableResult
+    func resolveQuick(_ items: [QuickPhoto], as disposition: QuickDisposition) -> Bool {
+        guard quickActionsAllowed, !items.isEmpty, items.allSatisfy(isQuickItemCurrent) else { return false }
+        let ids = Set(items.map(\.id))
+        let before = quickReview.store.notes.filter { ids.contains($0.key) }
+        quickReview.set(disposition, for: items)
+        let after = quickReview.store.notes.filter { ids.contains($0.key) }
+        quickUndo = { [weak self] in
+            guard let self, items.allSatisfy(self.isQuickItemCurrent),
+                  self.quickReview.store.notes.filter({ ids.contains($0.key) }) == after else { return false }
+            for id in ids { self.quickReview.store.notes[id] = before[id] }
+            return true
+        }
+        saveQuickReview()
+        return true
+    }
+
+    @discardableResult
+    func markQuick(_ items: [QuickPhoto]) -> Bool {
+        guard !items.isEmpty, Set(items.map(\.id)).count == items.count,
+              items.allSatisfy(canMarkQuick) else { return false }
+        let ids = Set(items.map(\.id))
+        let beforeNotes = quickReview.store.notes.filter { ids.contains($0.key) }
+        let groupIDs = Set(items.compactMap(\.groupID))
+        let beforeDecisions = decisions.filter { groupIDs.contains($0.key) }
+        // A changed history entry may hold a previous review of exactly this group.
+        let beforeHistory = history.filter { groupIDs.contains($0.key) }
+        let manual = items.filter { $0.groupID == nil }
+        markCleanup(Set(manual.map(\.id)))
+        for item in items {
+            if let group = quickGroup(for: item) {
+                setKeeper(item.photo, in: group, keep: false)
+            }
+            quickReview.store.notes[item.id] = nil
+        }
+        let afterDecisions = decisions.filter { groupIDs.contains($0.key) }
+        quickUndo = { [weak self] in
+            guard let self, items.allSatisfy(self.isQuickItemCurrent),
+                  self.decisions.filter({ groupIDs.contains($0.key) }) == afterDecisions,
+                  manual.allSatisfy({ self.cleanupMarks[$0.id] == $0.photo }),
+                  ids.isDisjoint(with: self.quickReview.store.notes.keys) else { return false }
+            for id in groupIDs {
+                self.decisions[id] = beforeDecisions[id]
+                self.history[id] = beforeHistory[id]
+            }
+            for item in manual { self.cleanupMarks[item.id] = nil }
+            for id in ids { self.quickReview.store.notes[id] = beforeNotes[id] }
+            self.saveDecisions()
+            self.saveHistory()
+            self.saveCleanupMarks()
+            return true
+        }
+        saveQuickReview()
+        return true
+    }
+
+    @discardableResult
+    func undoQuickReview() -> Bool {
+        guard quickActionsAllowed, let undo = quickUndo else { return false }
+        quickUndo = nil
+        guard undo() else {
+            errorMessage = "The photos or their Pending marks changed. Review the updated choices before marking again."
+            return false
+        }
+        saveQuickReview()
+        return true
+    }
+
+    private func saveQuickReview() {
+        guard persistenceEnabled else { return }
+        do { try LocalStore.write(quickReview.store, name: "quick-review.json") }
+        catch { errorMessage = "Quick Review could not be saved: \(error.localizedDescription)" }
     }
 }

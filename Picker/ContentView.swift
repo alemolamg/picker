@@ -118,6 +118,10 @@ struct ContentView: View {
                         QueueView(model: model)
                             .toolbar { pendingToolbar }
                     }
+                } else if model.filter == .quick || model.filter == .quickLater {
+                    NavigationSplitView(columnVisibility: $columnVisibility) { sidebar } detail: {
+                        QuickReviewView(model: model, later: model.filter == .quickLater)
+                    }
                 } else if model.filter == .cleanup {
                     NavigationSplitView(columnVisibility: $columnVisibility) { sidebar } detail: {
                         CleanupView(model: model)

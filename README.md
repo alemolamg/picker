@@ -44,6 +44,14 @@ The large preview is always visible. Its corner icon or Space hides the thumbnai
 
 The footer shows the library’s total photo count, detected group count, potential removals (one keeper per group), and the Pending count. Potential removals include skipped and reviewed groups and are independent of your selections.
 
+## Quick Review
+
+Open **Quick Review** after the library scan. It mixes up to 25 candidates at a time from screenshots, similar groups, and local image analysis. Filter by category and year. **Analyze More** inspects up to 160 additional photos per pass for possible blur, documents, and equipment labels. Such labels are suggestions for review. Recognized text is discarded after classification.
+
+Click photos to select individually or Shift-click to select a range. Use **Compare Two** or open a photo with its preview button. In the comparison, **Left Arrow** marks the active photo, **Right Arrow** keeps it, and **Review Later** defers the displayed photo or pair. Quick Review advances to another candidate after a decision. **Undo** reverses the latest Quick Review decision while its source items are still current. Open **Review Later** in the sidebar to resume deferred cases.
+
+Marking adds viewable photos to the existing **Pending** queue. You can inspect or unmark them there before confirming deletion. For cloud-only photos, request the preview from the individual photo before marking it. Quick Review never downloads photos during analysis.
+
 ## Local analysis and safeguards
 
 - Analysis (768-pixel target) and thumbnail (600-pixel target) requests disable network access. Picker never downloads library images for analysis, and does not save preview image files to its own cache. Large previews request a rendition sized for the visible window, capped at 2,560 pixels on the long edge. Picker uses local data by default. If a better preview needs iCloud, **Download This Photo** is the explicit opt-in for that one visible photo; merely opening or navigating groups never authorizes a download. It never requests maximum-size originals for routine previews. Photos controls the underlying download and may still fetch an original to produce the requested rendition. The preview shows download progress, supports retry, and cancels its outstanding requests when you switch photos or close it. Cloud-only or otherwise unreadable images are skipped by similarity analysis. Cleanup can review a single cloud photo after its preview loads.

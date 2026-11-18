@@ -9,12 +9,15 @@
 /* Begin PBXBuildFile section */
 		070DBBD1922FCA686BA86980 /* PickerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECED2B0C9FFF371F2D2830E8 /* PickerApp.swift */; };
 		22D01A38A697D9742F1A21F1 /* ScanTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC42D15203C7574109991BB8 /* ScanTests.swift */; };
+		3B3E6E4BA32FF1F300E440F8 /* QuickReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE43992F359F17822D577E6F /* QuickReviewView.swift */; };
 		4839D8112DDF8E2F2300E9F8 /* LibraryModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED74FEE0F8479065D7D36E55 /* LibraryModel.swift */; };
 		48D579F5752E3A3B078301F0 /* ScreenshotArchive.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CA9273A5941874E25207281 /* ScreenshotArchive.swift */; };
 		4C005587652E2AB3DFBF1965 /* VisionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C0257245E920B52EDBF5E3D /* VisionTests.swift */; };
 		4CD9F92E649F5642E3ED50B9 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21A4A23C394CA3E1084D3F51 /* ContentView.swift */; };
 		4F9A7DADBE0BDA8EBAA5853B /* DecisionControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44D713E2DFDB3BEE1AED58ED /* DecisionControls.swift */; };
+		75732BBC43F71A20E5401B65 /* QuickReviewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 540996F0CCA45B656C14EA5D /* QuickReviewTests.swift */; };
 		8B8778693C781205000D8223 /* PhotoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5664FE47662B9AF6FC7E7E43 /* PhotoView.swift */; };
+		8C0A539298A7BE794C81B3DC /* QuickReview.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDDB34FB4E84A1EC5D386AD6 /* QuickReview.swift */; };
 		8FAB31DCBB786C5E0782FFD2 /* CleanupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A596619927FA79040AED7537 /* CleanupView.swift */; };
 		90E204F8BBABD033DA49F028 /* Analysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = E31F490B9A1839F6FCA3FEFC /* Analysis.swift */; };
 		B0F9237C161BEC87C78DB121 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = BB8BB0B0AD96D28611579C35 /* Sparkle */; };
@@ -52,6 +55,7 @@
 		44D713E2DFDB3BEE1AED58ED /* DecisionControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DecisionControls.swift; sourceTree = "<group>"; };
 		48A57684D372470B717D9779 /* ReviewKeyboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewKeyboard.swift; sourceTree = "<group>"; };
 		50061473856F148398340BEA /* ScreenshotsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotsView.swift; sourceTree = "<group>"; };
+		540996F0CCA45B656C14EA5D /* QuickReviewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickReviewTests.swift; sourceTree = "<group>"; };
 		5664FE47662B9AF6FC7E7E43 /* PhotoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoView.swift; sourceTree = "<group>"; };
 		5E32FE54A03AEBC28C42FAEF /* ScanPlanning.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanPlanning.swift; sourceTree = "<group>"; };
 		5EAD7A9B92A90572C5EA468F /* ArchiveTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveTests.swift; sourceTree = "<group>"; };
@@ -66,10 +70,12 @@
 		D02F9403E6425DD7CA2A31EE /* QueueView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueueView.swift; sourceTree = "<group>"; };
 		DB34017040983C4C27A0AC05 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		DD6DFD5511E23B7D47CCF5D3 /* UpdateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateTests.swift; sourceTree = "<group>"; };
+		DE43992F359F17822D577E6F /* QuickReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickReviewView.swift; sourceTree = "<group>"; };
 		E31F490B9A1839F6FCA3FEFC /* Analysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Analysis.swift; sourceTree = "<group>"; };
 		EC42D15203C7574109991BB8 /* ScanTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanTests.swift; sourceTree = "<group>"; };
 		ECED2B0C9FFF371F2D2830E8 /* PickerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickerApp.swift; sourceTree = "<group>"; };
 		ED74FEE0F8479065D7D36E55 /* LibraryModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryModel.swift; sourceTree = "<group>"; };
+		EDDB34FB4E84A1EC5D386AD6 /* QuickReview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickReview.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -106,6 +112,7 @@
 			children = (
 				5EAD7A9B92A90572C5EA468F /* ArchiveTests.swift */,
 				B7B2D7A6AA84DEB1D96FA7B0 /* LayoutTests.swift */,
+				540996F0CCA45B656C14EA5D /* QuickReviewTests.swift */,
 				1FA6B37FD644823F8FF4754A /* ReviewTests.swift */,
 				EC42D15203C7574109991BB8 /* ScanTests.swift */,
 				DD6DFD5511E23B7D47CCF5D3 /* UpdateTests.swift */,
@@ -130,6 +137,8 @@
 				073C70ED981559DF3A7BE155 /* Picker.entitlements */,
 				ECED2B0C9FFF371F2D2830E8 /* PickerApp.swift */,
 				D02F9403E6425DD7CA2A31EE /* QueueView.swift */,
+				EDDB34FB4E84A1EC5D386AD6 /* QuickReview.swift */,
+				DE43992F359F17822D577E6F /* QuickReviewView.swift */,
 				48A57684D372470B717D9779 /* ReviewKeyboard.swift */,
 				5E32FE54A03AEBC28C42FAEF /* ScanPlanning.swift */,
 				7CA9273A5941874E25207281 /* ScreenshotArchive.swift */,
@@ -255,6 +264,8 @@
 				8B8778693C781205000D8223 /* PhotoView.swift in Sources */,
 				070DBBD1922FCA686BA86980 /* PickerApp.swift in Sources */,
 				EDD45EA46B30EFF0BCF4F285 /* QueueView.swift in Sources */,
+				8C0A539298A7BE794C81B3DC /* QuickReview.swift in Sources */,
+				3B3E6E4BA32FF1F300E440F8 /* QuickReviewView.swift in Sources */,
 				D3A22416DC0229665D2E3691 /* ReviewKeyboard.swift in Sources */,
 				F3F9DF9ABC3D9A162141A386 /* ScanPlanning.swift in Sources */,
 				48D579F5752E3A3B078301F0 /* ScreenshotArchive.swift in Sources */,
@@ -269,6 +280,7 @@
 			files = (
 				E7AF0D414B9C137B2B4D9F93 /* ArchiveTests.swift in Sources */,
 				B60BD01DDC0E79F68FFA58BF /* LayoutTests.swift in Sources */,
+				75732BBC43F71A20E5401B65 /* QuickReviewTests.swift in Sources */,
 				F3478080EE7F23550A9D6439 /* ReviewTests.swift in Sources */,
 				22D01A38A697D9742F1A21F1 /* ScanTests.swift in Sources */,
 				E27358A326C38C27CE4E0716 /* UpdateTests.swift in Sources */,
